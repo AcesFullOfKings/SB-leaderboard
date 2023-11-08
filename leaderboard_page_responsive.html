@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaderboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+        }
+
+        table {
+            border-collapse: collapse;
+            max-width: 90%; /* Limit table width to the screen width */
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #333;
+            color: #fff;
+        }
+
+        th a.hiddenlink {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        th.username {
+            text-align: left;
+            white-space: nowrap; /* Prevent line breaks */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Add ellipsis for overflow */
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                padding: 5px;
+                font-size: 12px;
+            }
+            th a.hiddenlink {
+                font-size: 12px;
+            }
+            th.username {
+                white-space: normal; /* Allow line breaks for usernames */
+                overflow: visible;
+                text-overflow: initial;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>SponsorBlock Leaderboard</h1>
+    <table>
+        <tr>
+            <th>Position</th>
+            <th title="UserID is shown where the username is not set.">Username</th>
+            <th><a class="hiddenlink" title="Click to sort by submissions. Only counts non-removed, skippable submissions." href="/leaderboard?sort=Submissions">Submissions</a></th>
+            <th><a class="hiddenlink" title="Click to sort by skips. Skips only count if the segment is not removed." href="/leaderboard?sort=Skips">Total Skips</a></th>
+            <th><a class="hiddenlink" title="Click to sort by time saved. Time Saved is the sum of views*duration across non-removed skippable segments." href="/leaderboard?sort=Time">Time Saved</a></th>
+        </tr>
+        % for user in users:
+            <tr>
+                <td>{{user[5]}}</td>
+                <td><a href="{{user[6]}}">{{user[1]}}</a></td>
+                <td>{{user[2]}}</td>
+                <td>{{user[3]}}</td>
+                <td>{{user[4]}}</td>
+            </tr>
+        % end
+    </table>
+</body>
+</html>
