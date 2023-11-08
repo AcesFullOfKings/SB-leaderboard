@@ -1,10 +1,6 @@
 from bottle import route, template, default_app, request, static_file
 
-def convert_seconds_to_duration(seconds):
-	"""
-	Takes an int, seconds, and returns a formatted string representing the readable time
-	"""
-	
+def format_seconds(seconds):
 	years, seconds = divmod(seconds, 31536000)
 	days, seconds = divmod(seconds, 86400)
 	hours, seconds = divmod(seconds, 3600)
@@ -32,42 +28,51 @@ def convert_seconds_to_duration(seconds):
 def serve_favicon():
     return static_file("LogoSponsorBlockSimple256px.png", root="./")
 
+@route("/logo.png")
+def serve_favicon():
+    return static_file("LogoSponsorBlockSimple256px.png", root="./")
+
 @route("/leaderboard")
 def leaderboard():
-	"""
-	Generates the formatted webpage containing the leaderboard
-	"""
-	
 	if (sort_on := request.query.sort) not in ["Submissions", "Skips", "Time"]:
 		sort_on = "Submissions"
 
 	path = "leaderboard.csv"
 
-	# csv columns = Username, Submissions, Total Skips, Time Saved
+	# columns = UserID, Username, Submissions, Total Skips, Time Saved
 	with open(path, "r") as f:
-		rows = f.read().splitlines() 
+		rows = f.read().splitlines()  # Use .splitlines() to split lines
 
-	sort_nums = {"Submissions":1,"Skips":2,"Time":3,} # the column number to sort on
+	sort_nums = {"Submissions":2,"Skips":3,"Time":4,}
 
 	users = [row.split(",") for row in rows]
+
 	users.sort(key=lambda x: int(x[sort_nums[sort_on]]), reverse=True)
 
 	position = 1
 	for user in users:
-		user[1] = f"{int(user[1]):,}"
+		user_id = user[0] #not displayed, only for the link
+		username = user[1]
+		length = len(username)
+		if length > 20 and " " not in username:
+			user[1] = username[:length//2] + "​" + username[length//2:] # zero-width space inserted
 		user[2] = f"{int(user[2]):,}"
-		user[3] = convert_seconds_to_duration(int(user[3]))
+		user[3] = f"{int(user[3]):,}"
+		user[4] = format_seconds(int(user[4]))
 		user.append(position)
+
+		if user_id == username:
+			user.append(f"https://sb.ltn.fi/userid/{user_id}")
+		else:
+			user.append(f"https://sb.ltn.fi/username/{username}")
+
 		position += 1
 
 	users = users[:200] # in leaderboard.py we only get the 200 highest users in any given category.
 
-	return template("./leaderboard_template", users=users)
+	return template("./leaderboard_page_responsive.html", users=users)
 
 application = default_app()
 
 if __name__ == "__main__":
-	# run the server listening on localhost:8080
-	host = "localhost"
-	port = 8080
-	application.run(host=host, port=port)
+	application.run(host="localhost", port=8080)
