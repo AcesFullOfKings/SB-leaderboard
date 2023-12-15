@@ -13,6 +13,19 @@ from time import time
 
 start_time=time()
 
+""" 
+# prob do this on a separate page in future, maybe use pie charts and stuff.
+# Maybe like, pie charts for seg distribution %s in the last day/month/year/all
+
+# overall global stats:
+overall_users       = 0
+contributing_users  = 0
+overall_submissions = 0
+overall_time_saved  = 0
+overall_skips       = 0
+removed_submissions = 0
+"""
+
 # set up segs reader:
 sponsortimes = open("download/sponsorTimes.csv", "r")
 first_row = sponsortimes.readline() # discard this so it's not processed in the loop below
@@ -43,18 +56,26 @@ for segment in segment_reader:
 	startTime    = float(segment["startTime"])
 	views        = int(segment["views"])
 	userID       = segment["userID"]
-	actionType   = segment["actionType"]
+	actionType   = segment["actionType"] # can be skip, mute, full, poi, or chapter
 
-	# don't count removed/hidden submissions
-	if ((votes > -2) and (not hidden) and (not shadowHidden) and (actionType=="skip")):
-		duration = endTime-startTime
+	"""
+	update:
+	  - hidden segs should now count as skips and time saved
+	  - non-skippable segs should now still count as submissions
+	"""
 
+	# don't count removed/shadowbanned submissions
+	if ((votes > -2) and (not shadowHidden)):
 		if userID not in users:
 			users[userID] = {"submissions":0, "total_skips":0, "time_saved":0, "username":userID}
 
-		users[userID]["total_skips"] += views
-		users[userID]["time_saved"]  += (duration*views)
 		users[userID]["submissions"] += 1
+
+		if actionType=="skip":
+			duration = endTime-startTime
+
+			users[userID]["total_skips"] += views
+			users[userID]["time_saved"]  += (duration*views)
 
 	line_num += 1
 	if not line_num%1000000:
@@ -99,9 +120,12 @@ top_time_saved  = sorted(user_list, key=lambda x: x[4], reverse=True)[:200]
 del user_list
 
 # Merge the users from each top list
-added_userIDs = set() # so we don't add a user more than once
-top_users = list()
+#added_userIDs = set() # so we don't add a user more than once
+#top_users = list()
 
+top_users = set(top_submissions + top_skips + top_time_saved)
+
+"""
 for user in top_skips:
 	if user[0] not in added_userIDs:
 		top_users.append(user)
@@ -116,6 +140,7 @@ for user in top_time_saved:
 	if user[0] not in added_userIDs:
 		top_users.append(user)
 		added_userIDs.add(user[0])
+"""
 
 print("Writing output to file..")
 line_num = 0

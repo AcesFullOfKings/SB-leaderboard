@@ -1,4 +1,4 @@
-from bottle import route, template, default_app, request, static_file
+from bottle import route, template, default_app, request, static_file, request
 
 def format_seconds(seconds):
 	years, seconds = divmod(seconds, 31536000)
@@ -26,22 +26,36 @@ def format_seconds(seconds):
 
 @route("/favicon.ico")
 def serve_favicon():
-    return static_file("LogoSponsorBlockSimple256px.png", root="./")
+	return static_file("LogoSponsorBlockSimple256px.png", root="/home/AcesFullOfKings/server/")
 
-@route("/logo.png")
-def serve_favicon():
-    return static_file("LogoSponsorBlockSimple256px.png", root="./")
+@route("/beta")
+def serve_beta():
+	if (sort_on := request.query.sort) not in ["Submissions", "Skips", "Time"]:
+		sort_on = "Submissions"
 
-@route("/leaderboard")
+	users = get_users(sort_on=sort_on)
+
+	return template("/home/AcesFullOfKings/server/beta_page.html", users=users)
+
+
+@route("/")
 def leaderboard():
 	if (sort_on := request.query.sort) not in ["Submissions", "Skips", "Time"]:
 		sort_on = "Submissions"
 
-	path = "leaderboard.csv"
+	users = get_users(sort_on=sort_on)
+
+	return template("/home/AcesFullOfKings/server/leaderboard_page.html", users=users)
+
+def get_users(sort_on="Submissions"):
+	if sort_on not in ["Submissions", "Skips", "Time"]:
+		sort_on = "Submissions"
+
+	path = "/home/AcesFullOfKings/server/leaderboard.csv"
 
 	# columns = UserID, Username, Submissions, Total Skips, Time Saved
 	with open(path, "r") as f:
-		rows = f.read().splitlines()  # Use .splitlines() to split lines
+		rows = f.read().splitlines() 
 
 	sort_nums = {"Submissions":2,"Skips":3,"Time":4,}
 
@@ -69,8 +83,15 @@ def leaderboard():
 		position += 1
 
 	users = users[:200] # in leaderboard.py we only get the 200 highest users in any given category.
+	return users
 
-	return template("./leaderboard_page_responsive.html", users=users)
+@route("/leaderboardStyleLight.css")
+def css_light():
+    return static_file("leaderboardStyleLight.css", root="/home/AcesFullOfKings/server/")
+
+@route("/leaderboardStyleDark.css")
+def css_dark():
+    return static_file("leaderboardStyleDark.css", root="/home/AcesFullOfKings/server/")
 
 application = default_app()
 
