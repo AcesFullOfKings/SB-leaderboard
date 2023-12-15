@@ -1,9 +1,22 @@
 from bottle import route, template, default_app, request, static_file, request
+from datetime import datetime
+import platform
+
+current_platform = platform.system()
+
+if current_platform == "Darwin":  # macOS
+	file_location = ""
+elif current_platform == "Linux": # cloud server
+	file_location = "/home/AcesFullOfKings/server/"
+else:
+	raise ValueError(f"Unknown platform: {current_platform}")
+
+del platform
 
 def format_seconds(seconds):
 	# a year is not defined in seconds, but for simplicity I use 365*24*60*60. good enough
 	years, seconds = divmod(seconds, 31536000)
-	
+
 	days, seconds = divmod(seconds, 86400)
 	hours, seconds = divmod(seconds, 3600)
 	minutes, seconds = divmod(seconds, 60)
@@ -28,7 +41,15 @@ def format_seconds(seconds):
 
 @route("/favicon.ico")
 def serve_favicon():
-	return static_file("LogoSponsorBlockSimple256px.png", root="/home/AcesFullOfKings/server/")
+	return static_file("LogoSponsorBlockSimple256px.png", root=file_location)
+
+def get_last_updated():
+    with open(file_location+"last_db_update.txt", "r") as f:
+        last_update = f.read()
+
+    formatted_string = datetime.utcfromtimestamp(int(last_update)).strftime('%d/%m/%y %H:%M')
+
+    return formatted_string
 
 @route("/beta")
 def serve_beta():
@@ -36,8 +57,11 @@ def serve_beta():
 		sort_on = "Submissions"
 
 	users = get_users(sort_on=sort_on)
+	global_stats = get_global_stats()
 
-	return template("/home/AcesFullOfKings/server/beta_page.html", users=users)
+	print(global_stats)
+
+	return template(file_location + "beta_page.html", users=users, global_stats=global_stats, last_updated=get_last_updated())
 
 
 @route("/")
@@ -46,18 +70,21 @@ def leaderboard():
 		sort_on = "Submissions"
 
 	users = get_users(sort_on=sort_on)
+	global_stats = get_global_stats()
 
-	return template("/home/AcesFullOfKings/server/leaderboard_page.html", users=users)
+	print(global_stats)
+
+	return template(file_location + "leaderboard_page.html", users=users, global_stats=global_stats, last_updated=get_last_updated())
 
 def get_users(sort_on="Submissions"):
 	if sort_on not in ["Submissions", "Skips", "Time"]:
 		sort_on = "Submissions"
 
-	path = "/home/AcesFullOfKings/server/leaderboard.csv"
+	path = file_location + "leaderboard.csv"
 
 	# columns = UserID, Username, Submissions, Total Skips, Time Saved
 	with open(path, "r") as f:
-		rows = f.read().splitlines() 
+		rows = f.read().splitlines()
 
 	sort_nums = {"Submissions":2,"Skips":3,"Time":4,}
 
@@ -67,11 +94,11 @@ def get_users(sort_on="Submissions"):
 
 	position = 1
 	for user in users:
-		user_id = user[0] #not displayed, only for the link
+		user_id = user[0] #not displayed, only used for the link
 		username = user[1]
 		length = len(username)
-		if length > 20 and " " not in username:
-			user[1] = username[:length//2] + "​" + username[length//2:] # zero-width space inserted
+		if length > 20 and " " not in username: # good enough heuristic for long usernames which won't split over two lines
+			user[1] = username[:length//2] + "​" + username[length//2:] # zero-width space inserted so it can span two lines
 		user[2] = f"{int(user[2]):,}"
 		user[3] = f"{int(user[3]):,}"
 		user[4] = format_seconds(int(user[4]))
@@ -87,15 +114,28 @@ def get_users(sort_on="Submissions"):
 	users = users[:200] # in leaderboard.py we only get the 200 highest users in any given category.
 	return users
 
+def get_global_stats():
+	with open(file_location+"global_stats.txt", "r") as f:
+		file_data = f.read().split()
+
+	global_stats = dict()
+	global_stats["contributing_users"]  = file_data[0]
+	global_stats["overall_submissions"] = file_data[1]
+	global_stats["overall_time_saved"]  = format_seconds(int(float(file_data[2])))
+	global_stats["overall_skips"]       = file_data[3]
+	global_stats["removed_submissions"] = file_data[4]
+
+	return global_stats
+
 @route("/leaderboardStyleLight.css")
 def css_light():
-    return static_file("leaderboardStyleLight.css", root="/home/AcesFullOfKings/server/")
+    return static_file("leaderboardStyleLight.css", root=file_location)
 
 @route("/leaderboardStyleDark.css")
 def css_dark():
-    return static_file("leaderboardStyleDark.css", root="/home/AcesFullOfKings/server/")
+    return static_file("leaderboardStyleDark.css", root=file_location)
 
 application = default_app()
 
 if __name__ == "__main__":
-	application.run(host="localhost", port=8080)
+	application.run(host="localhost", port=8080)#, debug=True, reloader=True)

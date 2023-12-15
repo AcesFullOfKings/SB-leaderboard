@@ -16,6 +16,7 @@ start_time=time()
 """ 
 # prob do this on a separate page in future, maybe use pie charts and stuff.
 # Maybe like, pie charts for seg distribution %s in the last day/month/year/all
+"""
 
 # overall global stats:
 overall_users       = 0
@@ -24,7 +25,7 @@ overall_submissions = 0
 overall_time_saved  = 0
 overall_skips       = 0
 removed_submissions = 0
-"""
+
 
 # set up segs reader:
 sponsortimes = open("download/sponsorTimes.csv", "r")
@@ -64,6 +65,8 @@ for segment in segment_reader:
 	  - non-skippable segs should now still count as submissions
 	"""
 
+	overall_submissions += 1
+
 	# don't count removed/shadowbanned submissions
 	if ((votes > -2) and (not shadowHidden)):
 		if userID not in users:
@@ -72,10 +75,16 @@ for segment in segment_reader:
 		users[userID]["submissions"] += 1
 
 		if actionType=="skip":
-			duration = endTime-startTime
-
 			users[userID]["total_skips"] += views
-			users[userID]["time_saved"]  += (duration*views)
+			overall_skips += views
+
+			duration = endTime-startTime
+			time_saved = (duration*views)
+			users[userID]["time_saved"]  += time_saved
+			overall_time_saved += time_saved
+
+	if votes <= -2 or shadowHidden or hidden:
+		removed_submissions += 1
 
 	line_num += 1
 	if not line_num%1000000:
@@ -84,10 +93,12 @@ for segment in segment_reader:
 sponsortimes.close() # finished with this file now
 end_time=time()
 
+contributing_users = len(users)
+
 print(f"Time taken: {round(end_time-start_time,1)}")
 print("Processing usernames.csv..")
 
-line_num=0 # only for printing progress
+line_num=0
 
 for user_row in username_reader:
 	userID    = user_row["userID"]
@@ -119,28 +130,9 @@ top_time_saved  = sorted(user_list, key=lambda x: x[4], reverse=True)[:200]
 
 del user_list
 
-# Merge the users from each top list
-#added_userIDs = set() # so we don't add a user more than once
-#top_users = list()
+# Merge the users from each top list into a set to prevent counting any user more than once
 
 top_users = set(top_submissions + top_skips + top_time_saved)
-
-"""
-for user in top_skips:
-	if user[0] not in added_userIDs:
-		top_users.append(user)
-		added_userIDs.add(user[0])
-
-for user in top_submissions:
-	if user[0] not in added_userIDs:
-		top_users.append(user)
-		added_userIDs.add(user[0])
-
-for user in top_time_saved:
-	if user[0] not in added_userIDs:
-		top_users.append(user)
-		added_userIDs.add(user[0])
-"""
 
 print("Writing output to file..")
 line_num = 0
@@ -159,5 +151,12 @@ with open("leaderboard.csv", "w") as f:
 		
 		if not line_num%100:
 			print(f"Writing line {line_num}")
+
+with open("global_stats.txt", "w") as f:
+	f.write(str(contributing_users) + "\n")
+	f.write(str(overall_submissions) + "\n")
+	f.write(str(overall_time_saved) + "\n")
+	f.write(str(overall_skips) + "\n")
+	f.write(str(removed_submissions) + "\n")
 
 print("Done!")

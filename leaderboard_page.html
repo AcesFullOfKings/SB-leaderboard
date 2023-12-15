@@ -7,14 +7,14 @@
 </head>
 <body>
     <script>
-        function setCookie(name,value,days) {
+        function setCookie(name,value,days=3650) {
             var expires = "";
             if (days) {
                 var date = new Date();
                 date.setTime(date.getTime() + (days*24*60*60*1000));
                 expires = "; expires=" + date.toUTCString();
             }
-            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
         }
 
         function getCookie(name) {
@@ -40,22 +40,6 @@
             setStyle();
         }
 
-        function switchStyles(){
-            // Get current stylesheet
-            var currentStylesheet = document.querySelector('link[rel="stylesheet"]:not([disabled])');
-
-            // .. and disable it
-            currentStylesheet.setAttribute("disabled", "disabled");
-
-            if (currentStylesheet.id === "csslight"){
-                var nextStylesheet = "cssdark";
-            } else {
-                var nextStylesheet = "csslight";
-            }
-            // un-disable the other stylesheet
-            document.getElementById(nextStylesheet).removeAttribute("disabled");
-        }
-
         function setStyle(){
             savedStyle = getCookie("theme");
             if (savedStyle == "light") {
@@ -70,18 +54,44 @@
     </script>
     <header>
         <div class = "title-container">
-            <a href="https://sponsor.ajay.app/"><img src="https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png"></a>
+            <a href="https://sponsor.ajay.app/"><img class="SBlogo" src = "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png"></a>
             <h1>SponsorBlock Leaderboard</h1>
             <input type="button" value="Light/Dark" class="themeToggle" onclick="setThemeCookie()">
         </div>
     </header>
-    <table>
+    <table class="globalStats">
+        <tr>
+            <th style="text-align: left; width:160px">Global Stats</th>
+            <th style="text-align: left; width:160px"> </th>
+        </tr>
+        <tr title="Number of users with at least one non-removed segment">
+            <td style="text-align: left;">Contributing Users:</td>
+            <td style="text-align: left;">{{f"{int(global_stats['contributing_users']):,}"}}</td>
+        </tr>
+        <tr title="All segments, of all categories, removed and non-removed">
+            <td style="text-align: left;">Total Submissions:</td>
+            <td style="text-align: left;">{{f"{int(global_stats['overall_submissions']):,}"}}</td>
+        </tr>
+        <tr title="Time saved across non-removed, skippable segments">
+            <td style="text-align: left;">Time Saved:</td>
+            <td style="text-align: left;">{{global_stats['overall_time_saved']}}</td>
+        </tr>
+        <tr title="Number of skips on non-removed, skippable segments">
+            <td style="text-align: left;">Total Skips:</td>
+            <td style="text-align: left;">{{f"{int(global_stats['overall_skips']):,}"}}</td>
+        </tr>
+        <tr title="Number of segments which have been removed, either by user votes or by a VIP">
+            <td style="text-align: left;">Removed Segments:</td>
+            <td style="text-align: left;">{{f"{int(global_stats['removed_submissions']):,}"}}</td>
+        </tr>
+    </table>
+    <table class="userstats">
         <tr>
             <th>Rank</th>
             <th title="UserID is shown where the username is not set.">Username</th>
-            <th><a class="hiddenlink" title="Click to sort by submissions. Only counts non-removed submissions." href="?sort=Submissions">Submissions</a></th>
-            <th><a class="hiddenlink" title="Click to sort by skips. Skips only count on non-removed, skippable submissions." href="?sort=Skips">Total Skips</a></th>
-            <th><a class="hiddenlink" title="Click to sort by time saved. Time Saved is the sum of views*duration across non-removed, skippable segments." href="?sort=Time">Time Saved</a></th>
+            <th><a class="hiddenlink" title="Click to sort by submissions. Only counts non-removed, skippable segments." href="?sort=Submissions">Submissions</a></th>
+            <th><a class="hiddenlink" title="Click to sort by skips. Skips only count if the segment is not removed." href="?sort=Skips">Total Skips</a></th>
+            <th><a class="hiddenlink" title="Click to sort by time saved. Time Saved is the sum of views*duration across non-removed skippable segments." href="?sort=Time">Time Saved</a></th>
         </tr>
         % for user in users:
             <tr>
@@ -94,7 +104,7 @@
         % end
     </table>
     <div class="attribution">
-        Uses SponsorBlock data licensed used under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> from <a href="https://sponsor.ajay.app/">https://sponsor.ajay.app/</a>.
+        Leaderboard data was last updated {{last_updated}} UTC.Uses SponsorBlock data licensed used under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> from <a href="https://sponsor.ajay.app/">https://sponsor.ajay.app/</a>.
     </div>
 </body>
 </html>
