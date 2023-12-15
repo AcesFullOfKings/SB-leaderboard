@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaderboard</title>
+    <link id="csslight" rel="stylesheet" type="text/css" href="leaderboardStyleLight.css">
+    <link id="cssdark"  rel="stylesheet" type="text/css" href="leaderboardStyleDark.css">
+</head>
+<body>
+    <script>
+        function setCookie(name,value,days) {
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days*24*60*60*1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for(var i=0;i < ca.length;i++) {
+                var c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+            }
+            return null;
+        }
+
+        function setThemeCookie(){
+            var currentMode = getCookie("theme");
+
+            if (currentMode == "light") {
+                setCookie("theme","dark");
+            } else {
+                setCookie("theme","light");
+            }
+
+            setStyle();
+        }
+
+        function switchStyles(){
+            // Get current stylesheet
+            var currentStylesheet = document.querySelector('link[rel="stylesheet"]:not([disabled])');
+
+            // .. and disable it
+            currentStylesheet.setAttribute("disabled", "disabled");
+
+            if (currentStylesheet.id === "csslight"){
+                var nextStylesheet = "cssdark";
+            } else {
+                var nextStylesheet = "csslight";
+            }
+            // un-disable the other stylesheet
+            document.getElementById(nextStylesheet).removeAttribute("disabled");
+        }
+
+        function setStyle(){
+            savedStyle = getCookie("theme");
+            if (savedStyle == "light") {
+                document.getElementById("cssdark").setAttribute("disabled", "disabled");;
+                document.getElementById("csslight").removeAttribute("disabled");
+            } else {
+                document.getElementById("csslight").setAttribute("disabled", "disabled");;
+                document.getElementById("cssdark").removeAttribute("disabled");
+            }
+        }
+        window.onload = setStyle;
+    </script>
+    <header>
+        <div class = "title-container">
+            <a href="https://sponsor.ajay.app/"><img src="https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png"></a>
+            <h1>SponsorBlock Leaderboard</h1>
+            <input type="button" value="Light/Dark" class="themeToggle" onclick="setThemeCookie()">
+        </div>
+    </header>
+    <table>
+        <tr>
+            <th>Rank</th>
+            <th title="UserID is shown where the username is not set.">Username</th>
+            <th><a class="hiddenlink" title="Click to sort by submissions. Only counts non-removed submissions." href="?sort=Submissions">Submissions</a></th>
+            <th><a class="hiddenlink" title="Click to sort by skips. Skips only count on non-removed, skippable submissions." href="?sort=Skips">Total Skips</a></th>
+            <th><a class="hiddenlink" title="Click to sort by time saved. Time Saved is the sum of views*duration across non-removed, skippable segments." href="?sort=Time">Time Saved</a></th>
+        </tr>
+        % for user in users:
+            <tr>
+                <td>{{user[5]}}</td>
+                <td><a href="{{user[6]}}">{{user[1]}}</a></td>
+                <td>{{user[2]}}</td>
+                <td>{{user[3]}}</td>
+                <td>{{user[4]}}</td>
+            </tr>
+        % end
+    </table>
+    <div class="attribution">
+        Uses SponsorBlock data licensed used under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> from <a href="https://sponsor.ajay.app/">https://sponsor.ajay.app/</a>.
+    </div>
+</body>
+</html>
