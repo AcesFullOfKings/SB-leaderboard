@@ -1,7 +1,9 @@
 from bottle import route, template, default_app, request, static_file, request
 
 def format_seconds(seconds):
+	# a year is not defined in seconds, but for simplicity I use 365*24*60*60. good enough
 	years, seconds = divmod(seconds, 31536000)
+	
 	days, seconds = divmod(seconds, 86400)
 	hours, seconds = divmod(seconds, 3600)
 	minutes, seconds = divmod(seconds, 60)
