@@ -4,6 +4,7 @@
     <title>Leaderboard</title>
     <link id="csslight" rel="stylesheet" type="text/css" href="leaderboardStyleLight.css">
     <link id="cssdark"  rel="stylesheet" type="text/css" href="leaderboardStyleDark.css">
+    <link id="csspink"  rel="stylesheet" type="text/css" href="leaderboardStylePink.css">
 </head>
 <body>
     <script>
@@ -28,35 +29,49 @@
             return null;
         }
 
-        function setThemeCookie(){
-            var currentMode = getCookie("theme");
+function setThemeCookie(){
+    var currentMode = getCookie("theme");
 
-            if (currentMode == "light") {
-                setCookie("theme","dark");
-            } else {
-                setCookie("theme","light");
-            }
+    if(!currentMode){
+        currentMode = "dark"; // assume dark by default
+    }
 
-            setStyle();
-        }
+    // the cycle goes Dark -> Light -> Pink -> Dark
 
-        function setStyle(){
-            savedStyle = getCookie("theme");
-            if (savedStyle == "light") {
-                document.getElementById("cssdark").setAttribute("disabled", "disabled");;
-                document.getElementById("csslight").removeAttribute("disabled");
-            } else {
-                document.getElementById("csslight").setAttribute("disabled", "disabled");;
-                document.getElementById("cssdark").removeAttribute("disabled");
-            }
-        }
+    if (currentMode == "light") {
+        setCookie("theme", "pink");
+    } else if (currentMode == "dark") {
+        setCookie("theme", "light");
+    } else {
+        setCookie("theme", "dark");
+    }
+
+    setStyle();
+}
+
+function setStyle(){
+    savedStyle = getCookie("theme");
+    if (savedStyle == "light") {
+        document.getElementById("cssdark").setAttribute("disabled", "disabled");
+        document.getElementById("csslight").removeAttribute("disabled");
+        document.getElementById("csspink").setAttribute("disabled", "disabled");
+    } else if (savedStyle == "pink") {
+        document.getElementById("csslight").setAttribute("disabled", "disabled");
+        document.getElementById("cssdark").setAttribute("disabled", "disabled");
+        document.getElementById("csspink").removeAttribute("disabled");
+    } else { // be dark by default
+        document.getElementById("csslight").setAttribute("disabled", "disabled");
+        document.getElementById("cssdark").removeAttribute("disabled");
+        document.getElementById("csspink").setAttribute("disabled", "disabled");
+    }
+}
         window.onload = setStyle;
     </script>
     <header>
         <div class = "title-container">
             <a href="https://sponsor.ajay.app/"><img class="SBlogo" src = "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png"></a>
             <h1>SponsorBlock Leaderboard</h1>
-            <input type="button" value="Light/Dark" class="themeToggle" onclick="setThemeCookie()">
+            <input type="button" value="Light/Dark/Pink" class="themeToggle" onclick="setThemeCookie()">
         </div>
     </header>
     <table class="globalStats">
@@ -89,7 +104,7 @@
         <tr>
             <th>Rank</th>
             <th title="UserID is shown where the username is not set.">Username</th>
-            <th><a class="hiddenlink" title="Click to sort by submissions. Only counts non-removed, skippable segments." href="?sort=Submissions">Submissions</a></th>
+            <th><a class="hiddenlink" title="Click to sort by submissions. Only counts non-removed segments." href="?sort=Submissions">Submissions</a></th>
             <th><a class="hiddenlink" title="Click to sort by skips. Skips only count if the segment is not removed." href="?sort=Skips">Total Skips</a></th>
             <th><a class="hiddenlink" title="Click to sort by time saved. Time Saved is the sum of views*duration across non-removed skippable segments." href="?sort=Time">Time Saved</a></th>
         </tr>
@@ -104,7 +119,7 @@
         % end
     </table>
     <div class="attribution">
-        Leaderboard data was last updated {{last_updated}} UTC.Uses SponsorBlock data licensed used under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> from <a href="https://sponsor.ajay.app/">https://sponsor.ajay.app/</a>.
+        Leaderboard data was last updated {{last_updated}} UTC. Uses SponsorBlock data licensed used under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> from <a href="https://sponsor.ajay.app/">https://sponsor.ajay.app/</a>.
     </div>
 </body>
 </html>
