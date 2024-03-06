@@ -37,6 +37,8 @@ def format_seconds(seconds):
 	if seconds and units < 2:
 		duration += f"{seconds}s "
 		# units += 1 # not needed
+	if not duration:
+	    duration = "0" # damn you and your highlights dfb44b
 	return duration
 
 @route("/favicon.ico")
@@ -134,6 +136,10 @@ def css_light():
 @route("/leaderboardStyleDark.css")
 def css_dark():
     return static_file("leaderboardStyleDark.css", root=file_location)
+
+@route("/leaderboardStylePink.css")
+def css_light():
+    return static_file("leaderboardStylePink.css", root=file_location)
 
 application = default_app()
 
