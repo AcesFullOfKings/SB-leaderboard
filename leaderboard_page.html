@@ -71,7 +71,7 @@ function setStyle(){
         <div class = "title-container">
             <a href="https://sponsor.ajay.app/"><img class="SBlogo" src = "https://sponsor.ajay.app/LogoSponsorBlockSimple256px.png"></a>
             <h1>SponsorBlock Leaderboard</h1>
-            <input type="button" value="Light/Dark/Pink" class="themeToggle" onclick="setThemeCookie()">
+            <input type="button" value="Toggle Theme" class="themeToggle" onclick="setThemeCookie()">
         </div>
     </header>
     <table class="globalStats">
@@ -107,14 +107,16 @@ function setStyle(){
             <th><a class="hiddenlink" title="Click to sort by submissions. Only counts non-removed segments." href="?sort=Submissions">Submissions</a></th>
             <th><a class="hiddenlink" title="Click to sort by skips. Skips only count if the segment is not removed." href="?sort=Skips">Total Skips</a></th>
             <th><a class="hiddenlink" title="Click to sort by time saved. Time Saved is the sum of views*duration across non-removed skippable segments." href="?sort=Time">Time Saved</a></th>
+            <th><a class="hiddenlink" title="Click to sort by total votes. Total Votes is the NET score of upvotes and downvotes on segments submitted after September 2020." href="?sort=Votes">Total Votes</a></th>
         </tr>
-        % for user in users:
+        % for user_row in users:
             <tr>
-                <td>{{user[5]}}</td>
-                <td><a href="{{user[6]}}">{{user[1]}}</a></td>
-                <td>{{user[2]}}</td>
-                <td>{{user[3]}}</td>
-                <td>{{user[4]}}</td>
+                <td>{{user_row['rank']}}</td>
+                <td><a href="{{user_row['url']}}">{{user_row['username']}}</a></td>
+                <td>{{user_row['submissions']}}</td>
+                <td title="Average of {{user_row['skips_per_seg']}} per submission">{{user_row['skips'] }}</td>
+                <td title="Average of {{user_row['time_per_seg']}} per submission">{{user_row['time_saved']}}</td>
+                <td title="Average of {{user_row['votes_per_seg']}} per submission">{{user_row['votes']}}</td>
             </tr>
         % end
     </table>
