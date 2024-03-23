@@ -11,6 +11,7 @@ usernames.csv:    userID,userName,locked
 import csv
 from time import time
 
+auto_upvotes_endtime = 1598989542
 start_time=time()
 
 """ 
@@ -44,34 +45,34 @@ del first_row
 usernames_field_names = ["userID","userName","locked"]
 username_reader = csv.DictReader(usernames, fieldnames=usernames_field_names)
 
-users = dict() # format -> {userID:{username:"", submissions:0, skips:0, time_saved:0},}
+users = dict() # format -> {userID:{username:"", submissions:0, skips:0, time_saved:0, votes:0},}
 line_num = 0
 
 print("Processing sponsorTimes.csv..")
 
-for segment in segment_reader:
-	votes        = int(segment["votes"])
-	hidden       = int(segment["hidden"])
-	shadowHidden = int(segment["shadowHidden"])
-	endTime      = float(segment["endTime"])
-	startTime    = float(segment["startTime"])
-	views        = int(segment["views"])
-	userID       = segment["userID"]
-	actionType   = segment["actionType"] # can be skip, mute, full, poi, or chapter
+contributing_users = set()
+active_users = 0
+ignored_votes = 0
 
-	"""
-	update:
-	  - hidden segs should now count as skips and time saved
-	  - non-skippable segs should now still count as submissions
-	"""
+for segment in segment_reader:
+	votes         = int(segment["votes"])
+	hidden        = int(segment["hidden"])
+	shadowHidden  = int(segment["shadowHidden"])
+	endTime       = float(segment["endTime"])
+	startTime     = float(segment["startTime"])
+	views         = int(segment["views"])
+	userID        = segment["userID"]
+	actionType    = segment["actionType"] # can be skip, mute, full, poi, or chapter
+	timeSubmitted = int(segment["timeSubmitted"])/1000 #the db encodes this in milliseconds, but I want it in seconds.
 
 	overall_submissions += 1
 
+	if userID not in users:
+		users[userID] = {"submissions":0, "total_skips":0, "time_saved":0, "username":userID, "total_votes":0}
+
 	# don't count removed/shadowbanned submissions
 	if ((votes > -2) and (not shadowHidden)):
-		if userID not in users:
-			users[userID] = {"submissions":0, "total_skips":0, "time_saved":0, "username":userID}
-
+		contributing_users.add(userID)
 		users[userID]["submissions"] += 1
 
 		if actionType=="skip":
@@ -83,17 +84,23 @@ for segment in segment_reader:
 			users[userID]["time_saved"]  += time_saved
 			overall_time_saved += time_saved
 
+	if timeSubmitted > auto_upvotes_endtime:
+		users[userID]["total_votes"] += votes
+	else:
+		ignored_votes += 1
+
 	if votes <= -2 or shadowHidden or hidden:
 		removed_submissions += 1
 
 	line_num += 1
-	if not line_num%1000000:
+	if not line_num%1_000_000:
 		print(f"Processing line {line_num}")
 
 sponsortimes.close() # finished with this file now
 end_time=time()
 
-contributing_users = len(users)
+contributing_users = len(contributing_users)
+active_users = len(users)
 
 print(f"Time taken: {round(end_time-start_time,1)}")
 print("Processing usernames.csv..")
@@ -115,11 +122,11 @@ for user_row in username_reader:
 
 usernames.close() # finished with this
 
-#convert dict to list of lists (for easier sorting below)
+#convert dict to list of tuples (for easier sorting below)
 user_list=[]
 while users:
 	user_id, user_info = users.popitem() # returns and deletes the next item from users as a tuple of (key, value)
-	user_tuple = (user_id, user_info["username"], user_info["submissions"], user_info["total_skips"], user_info["time_saved"])
+	user_tuple = (user_id, user_info["username"], user_info["submissions"], user_info["total_skips"], user_info["time_saved"], user_info["total_votes"])
 	user_list.append(user_tuple)
 
 del users
@@ -127,12 +134,13 @@ del users
 top_submissions = sorted(user_list, key=lambda x: x[2], reverse=True)[:200]
 top_skips       = sorted(user_list, key=lambda x: x[3], reverse=True)[:200]
 top_time_saved  = sorted(user_list, key=lambda x: x[4], reverse=True)[:200]
+top_votes       = sorted(user_list, key=lambda x: x[5], reverse=True)[:200]
 
 del user_list
 
 # Merge the users from each top list into a set to prevent counting any user more than once
-
-top_users = set(top_submissions + top_skips + top_time_saved)
+top_users = set(top_submissions + top_skips + top_time_saved + top_votes)
+print(f"Ignored votes on {ignored_votes} old segments")
 
 print("Writing output to file..")
 line_num = 0
@@ -144,8 +152,9 @@ with open("leaderboard.csv", "w") as f:
 		submissions = user[2]
 		skips       = user[3]
 		time_saved  = round(user[4])
+		votes       = user[5]
 
-		f.write(f"{user_id},{username},{submissions},{skips},{time_saved}\n")
+		f.write(f"{user_id},{username},{submissions},{skips},{time_saved},{votes}\n")
 
 		line_num += 1
 		
@@ -158,5 +167,6 @@ with open("global_stats.txt", "w") as f:
 	f.write(str(overall_time_saved) + "\n")
 	f.write(str(overall_skips) + "\n")
 	f.write(str(removed_submissions) + "\n")
+	f.write(str(active_users) + "\n")
 
 print("Done!")
